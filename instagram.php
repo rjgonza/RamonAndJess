@@ -1,7 +1,7 @@
 <html>
   <head></head>
   <body>
-    <h1>Instagram Tag Search</h1>
+    <h1>Instagram Photo Search by Tag</h1>
     <?php
     if (!isset($_POST['submit'])) {
     ?>
@@ -26,22 +26,31 @@
 
       try {
         // initialize client
-        $client = new Zend_Http_Client('https://api.instagram.com/v1/tags/search');
+        $client = new Zend_Http_Client('https://api.instagram.com/v1/tags/'. 
+          $_POST['q'] . '/media/recent');
         $client->setParameterGet('client_id', $CLIENT_ID);
-        $client->setParameterGet('q', $_POST['q']);
 
-        // get and display similar tags
+        // get images with matching tags
+        // transmit request and decode response
         $response = $client->request();
         $result = json_decode($response->getBody());
+        
+        // display images
         $data = $result->data;  
         if (count($data) > 0) {
           echo '<ul>';
           foreach ($data as $item) {
-            echo '<li>' . $item->name . ' (' . $item->media_count . 
-              ') </li>';
+            echo '<li style="display: inline-block; padding: 25px"><a href="' . 
+              $item->link . '"><img src="' . $item->images->thumbnail->url . 
+              '" /></a> <br/>';
+            echo 'By: <em>' . $item->user->username . '</em> <br/>';
+            echo 'Date: ' . date ('d M Y h:i:s', $item->created_time) . '<br/>';
+            echo $item->comments->count . ' comment(s). ' . $item->likes->count . 
+              ' likes. </li>';
           }
           echo '</ul>';
         }
+
       } catch (Exception $e) {
         echo 'ERROR: ' . $e->getMessage() . print_r($client);
         exit;
